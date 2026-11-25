@@ -13,7 +13,7 @@ Runs: 9router (`stacks/9router`), T3 Code, Rex, coding agents, and the pl-ai-inf
 | Apps at login | OrbStack, Tailscale, Rex, EasyCLIProxyAPI | Each app's "start at login" setting |
 | launchd agents | `local.fleet.agent`, `local.t3code.autostart` | `~/Library/LaunchAgents` |
 | Containers | 9router and the `ai-infra-*` stack | OrbStack starts Docker; `restart: unless-stopped` |
-| Tailnet ports | 9108 (agent), 20128 (9router), T3 Code over HTTPS | `tailscale serve`, persisted by Tailscale |
+| Tailnet ports | 9108 (agent), 20128 (9router), 3773 (T3 Code, for the edge proxy), T3 Code over HTTPS | `tailscale serve`, persisted by Tailscale |
 
 The pl-ai-infra agent and MCP host processes do not restart on their own: rerun `make up` after a reboot.
 
