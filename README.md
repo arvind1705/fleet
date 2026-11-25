@@ -74,7 +74,7 @@ First-time host setup: `hosts/devbox/system/setup-system.sh` (devbox OS) and `st
 
 - Per-host notes, boot behaviour and setup: [hosts/devbox/README.md](hosts/devbox/README.md), [hosts/mini/README.md](hosts/mini/README.md).
 - Adding a machine: [docs/onboarding.md](docs/onboarding.md).
-- Tailscale node keys expire (devbox 2027-05-15, mini 2027-05-19) unless key expiry is disabled in the admin console; an expired devbox key takes down `*.home.arpa` and the mini proxying.
+- Tailscale key expiry is disabled for devbox and the mini. Disable it for every new node too: an expired devbox key would take down `*.home.arpa` and the proxying to the mini.
 
 ## Adding a service
 
