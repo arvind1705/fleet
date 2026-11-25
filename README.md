@@ -59,7 +59,7 @@ bin/fleet status            # both machines via the portal API
 bin/fleet stacks devbox status
 ```
 
-Each machine has `~/dev/fleet`. On the mini it is a Git clone: `bin/fleet sync|apply mini` runs `git pull --ff-only` there, so commit and push first (it refuses unpushed commits and warns about uncommitted edits). On devbox it is a runtime copy updated by rsync; `.deployed-revision` records the synced commit. Private files (`stacks/*/.env`) exist only on the machines.
+Each machine has `~/dev/fleet`. On the mini it is a Git clone: `bin/fleet sync|apply mini` runs `git pull --ff-only` there, so commit and push first (it refuses unpushed commits and warns about uncommitted edits). On devbox it is a runtime copy updated by rsync (only the stacks the inventory assigns to it); `.deployed-revision` records the synced commit. Private files (`stacks/*/.env`) exist only on the machines.
 
 First-time host setup: `hosts/devbox/system/setup-system.sh` (devbox OS) and `stacks/setup-stacks.sh` (stack env files, systemd units), then `bin/fleet apply <node>`.
 

@@ -48,13 +48,20 @@ pull_node() {
 
 # Runtime copy (no .git on the node): rsync without deletes; secrets and private files are never sent.
 copy_node() {
-  local n="$1" ssh="$2" dir="$3"
+  local n="$1" ssh="$2" dir="$3" stack
+  local -a skip=()
+  # Only the stacks inventory.json assigns to this node are copied.
+  for stack in $(cd "$FLEET_DIR/stacks" && ls -d */ | tr -d /); do
+    [[ -f "$FLEET_DIR/stacks/$stack/compose.yaml" ]] || continue
+    inv stacks "$n" | grep -qx "$stack" || skip+=(--exclude "/stacks/$stack/")
+  done
   echo "==> copy $n ($ssh:$dir)"
   ssh "$ssh" "mkdir -p '$dir'"
   rsync -rlptz \
     --exclude .git --exclude /build --exclude .DS_Store --exclude __pycache__ \
     --include .env.example --exclude .env --exclude '.env.*' --exclude '*.env' \
     --exclude 'data/' --exclude 'config/' --exclude 'library/' \
+    ${skip[@]+"${skip[@]}"} \
     "$FLEET_DIR/" "$ssh:$dir/"
   ssh "$ssh" "printf '%s\n' '$(git -C "$FLEET_DIR" rev-parse --short HEAD 2>/dev/null || echo uncommitted)$(git -C "$FLEET_DIR" diff --quiet 2>/dev/null || echo '+dirty')' > '$dir/.deployed-revision'"
 }
