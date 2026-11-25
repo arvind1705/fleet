@@ -27,7 +27,7 @@ All names resolve to devbox, which proxies each one to the machine that runs it 
 
 `mini.home.arpa` and `devbox.home.arpa` point straight at each machine's tailnet IP.
 
-- **`*.home.arpa`**: answered by dnsmasq on devbox, listening only on its tailnet IP (`fleet-dns.service`). It needs one Tailscale admin setting: **DNS → Nameservers → Add nameserver → Custom → `100.109.219.37`, restrict to domain `home.arpa`**. Works at home and away, on any device signed in to Tailscale.
+- **`*.home.arpa`**: answered by dnsmasq on devbox, listening only on its tailnet IP (`fleet-dns.service`). It knows only the names generated from `inventory.json`; any other `home.arpa` name gets NXDOMAIN, and Caddy answers unknown host names with 404. It needs one Tailscale admin setting: **DNS → Nameservers → Add nameserver → Custom → `100.109.219.37`, restrict to domain `home.arpa`**. Works at home and away, on any device signed in to Tailscale.
 - **`*.local`**: published on the LAN by Avahi on devbox (`fleet-mdns.service`), for devices without Tailscale such as the TV.
 - The mini's services stay bound to `127.0.0.1`. `tailscale serve --tcp` exposes only the ports listed in the inventory on the mini's tailnet IP, so devbox can proxy to them and nothing opens on the LAN.
 
