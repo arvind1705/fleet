@@ -51,14 +51,15 @@ Edit on the Air, then deploy the narrowest thing:
 ```bash
 bin/fleet render            # review generated edge config in build/edge/
 bash scripts/validate.sh    # syntax, render, Compose config with example env files
-bin/fleet sync devbox       # copy files only (no deletes; .env and private files are never sent)
+bin/fleet sync devbox       # copy files (no deletes; .env and private files are never sent)
+bin/fleet sync mini         # git pull on the mini (push first)
 bin/fleet apply devbox      # sync + edge role + agent (devbox)
 bin/fleet apply mini        # sync + agent + tailnet exposure (mini)
 bin/fleet status            # both machines via the portal API
 bin/fleet stacks devbox status
 ```
 
-Deployed copies live in `~/dev/fleet` on each machine; they are runtime copies, not Git checkouts. `.deployed-revision` records the commit that was synced. Private files (`stacks/*/.env`, `langfuse.env`, Cube model files) exist only on the machines.
+Each machine has `~/dev/fleet`. On the mini it is a Git clone: `bin/fleet sync|apply mini` runs `git pull --ff-only` there, so commit and push first (it refuses unpushed commits and warns about uncommitted edits). On devbox it is a runtime copy updated by rsync; `.deployed-revision` records the synced commit. Private files (`stacks/*/.env`, `langfuse.env`, Cube model files) exist only on the machines.
 
 First-time host setup: `hosts/devbox/system/setup-system.sh` (devbox OS) and `stacks/setup-stacks.sh` (stack env files, systemd units), then `bin/fleet apply <node>`.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fleet control from the workstation. Nodes and their SSH aliases come from inventory.json.
 #
-#   fleet sync  <node|all>    copy this checkout to the node's fleet_dir (no deletes, no secrets)
+#   fleet sync  <node|all>    update the node: git pull if its fleet_dir is a clone, else copy (no deletes, no secrets)
 #   fleet apply <node|all>    sync, then apply roles: edge (Caddy/DNS/mDNS/portal), agent, tailnet exposure
 #   fleet stacks <node> <args>  run stacks/stacks.sh on a node (e.g. fleet stacks devbox status)
 #   fleet status              machines, containers and service health via the portal API
@@ -23,7 +23,33 @@ edge_node() {
 sync_node() {
   local n="$1" ssh dir
   ssh="$(inv get "nodes.$n.ssh")"; dir="$(inv get "nodes.$n.fleet_dir")"
-  echo "==> sync $n ($ssh:$dir)"
+  if ssh "$ssh" "test -d '$dir/.git'"; then
+    pull_node "$n" "$ssh" "$dir"
+  else
+    copy_node "$n" "$ssh" "$dir"
+  fi
+}
+
+# Git clone on the node: deploy what is pushed, never uncommitted workstation edits.
+pull_node() {
+  local n="$1" ssh="$2" dir="$3" head
+  head="$(git -C "$FLEET_DIR" rev-parse HEAD)"
+  if ! git -C "$FLEET_DIR" diff --quiet HEAD 2>/dev/null; then
+    echo "!! $n pulls from GitHub: uncommitted changes here will not be deployed" >&2
+  fi
+  git -C "$FLEET_DIR" fetch -q origin 2>/dev/null || true
+  if ! git -C "$FLEET_DIR" merge-base --is-ancestor "$head" origin/main 2>/dev/null; then
+    echo "!! $n pulls from GitHub: push $(git -C "$FLEET_DIR" rev-parse --short HEAD) first (git push)" >&2
+    return 1
+  fi
+  echo "==> pull $n ($ssh:$dir)"
+  ssh "$ssh" "cd '$dir' && git pull -q --ff-only && git log --oneline -1"
+}
+
+# Runtime copy (no .git on the node): rsync without deletes; secrets and private files are never sent.
+copy_node() {
+  local n="$1" ssh="$2" dir="$3"
+  echo "==> copy $n ($ssh:$dir)"
   ssh "$ssh" "mkdir -p '$dir'"
   rsync -rlptz \
     --exclude .git --exclude /build --exclude .DS_Store --exclude __pycache__ \
