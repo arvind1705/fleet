@@ -6,3 +6,4 @@
 - devbox is weak (2 cores, 8 GB, HDD): keep heavy or dev workloads on the mini.
 - Run `bash scripts/validate.sh` before committing. Check the portal (`http://devbox.local`) or `bin/fleet status` after deploying.
 - Sudo on the mini needs the user's password; devbox has passwordless sudo for `aravind`. Tailscale settings on devbox need `sudo tailscale ...`.
+- Host-specific facts (boot units, paths, quirks) are in `hosts/<node>/README.md`; adding a machine follows `docs/onboarding.md`. Keep them current when you change a host.

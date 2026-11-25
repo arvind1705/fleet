@@ -40,7 +40,10 @@ agent/                    fleet-agent.py (Linux + macOS telemetry), systemd unit
 edge/                     devbox role: render.py -> Caddyfile, dnsmasq.conf, mDNS names; setup-edge.sh
 portal/                   the fleet dashboard (static; reads /inventory.json and /api/nodes/<node>/system)
 stacks/                   Docker Compose stacks, stacks.sh, setup-stacks.sh, stack@.service
-hosts/devbox/system/      devbox OS hardening (logind, ssh, wifi, apt, sysctl, zswap, media LAN filter)
+hosts/devbox/             devbox notes (README) and OS hardening in system/ (logind, ssh, wifi, apt, sysctl, zswap, media LAN filter)
+hosts/mini/               Mac mini notes (README), setup-macos.sh, sshd and launchd files
+hosts/ssh_config.example  workstation SSH aliases (LAN, falling back to Tailscale)
+docs/onboarding.md        checklist for adding a machine or handing the fleet to an agent
 scripts/                  inv.py (inventory queries), expose-tailnet.sh, validate.sh
 ```
 
@@ -66,6 +69,12 @@ First-time host setup: `hosts/devbox/system/setup-system.sh` (devbox OS) and `st
 ## Portal and agents
 
 `fleet-agent.py` runs on every node on `127.0.0.1:9108` (systemd `fleet-agent.service` on devbox, launchd `local.fleet.agent` on the mini). It reports CPU (per core), memory, swap, disk, network, top processes, containers with resource use, health of that node's services, and controllable stacks. The portal on devbox reads `/api/nodes/<node>/system` for each node; devbox's Caddy proxies that to the local agent or to the mini's agent over the tailnet. The media stack can be started and stopped from the portal (`controls` in the inventory).
+
+## Machines
+
+- Per-host notes, boot behaviour and setup: [hosts/devbox/README.md](hosts/devbox/README.md), [hosts/mini/README.md](hosts/mini/README.md).
+- Adding a machine: [docs/onboarding.md](docs/onboarding.md).
+- Tailscale node keys expire (devbox 2027-05-15, mini 2027-05-19) unless key expiry is disabled in the admin console; an expired devbox key takes down `*.home.arpa` and the mini proxying.
 
 ## Adding a service
 

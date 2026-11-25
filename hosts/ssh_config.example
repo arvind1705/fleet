@@ -1,0 +1,29 @@
+# Workstation ~/.ssh/config entries for the fleet (no keys or secrets here).
+# Each machine is reached on the LAN when it answers there, otherwise over Tailscale,
+# under one name. HostKeyAlias keeps a single known_hosts entry for both addresses.
+
+Match originalhost devbox exec "nc -z -G 1 192.168.0.172 22 >/dev/null 2>&1"
+    HostName 192.168.0.172
+
+Host devbox
+    HostName 100.109.219.37
+    HostKeyAlias devbox
+    User aravind
+    IdentitiesOnly yes
+    AddKeysToAgent yes
+    UseKeychain yes
+    SetEnv TERM=xterm-256color
+
+Match originalhost macmini exec "nc -z -G 1 192.168.0.146 22 >/dev/null 2>&1"
+    HostName 192.168.0.146
+
+Host macmini
+    HostName 100.85.3.99
+    HostKeyAlias macmini
+    User aravind
+    IdentitiesOnly yes
+    AddKeysToAgent yes
+    UseKeychain yes
+
+# `nc -G` is macOS syntax; on Linux use `nc -z -w 1`.
+# The mini's login name is aravind-mac-mini; "aravind" works because it is an alias of that account.
