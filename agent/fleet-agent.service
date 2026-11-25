@@ -1,0 +1,16 @@
+[Unit]
+Description=Fleet node agent (telemetry for the fleet portal)
+Documentation=https://github.com/arvind1705/fleet
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=aravind
+Group=aravind
+SupplementaryGroups=docker
+ExecStart=/usr/bin/python3 /home/aravind/dev/fleet/agent/fleet-agent.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

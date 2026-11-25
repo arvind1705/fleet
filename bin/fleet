@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Fleet control from the workstation. Nodes and their SSH aliases come from inventory.json.
+#
+#   fleet sync  <node|all>    copy this checkout to the node's fleet_dir (no deletes, no secrets)
+#   fleet apply <node|all>    sync, then apply roles: edge (Caddy/DNS/mDNS/portal), agent, tailnet exposure
+#   fleet stacks <node> <args>  run stacks/stacks.sh on a node (e.g. fleet stacks devbox status)
+#   fleet status              machines, containers and service health via the portal API
+#   fleet render              render edge config into build/edge for review
+set -euo pipefail
+
+FLEET_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+INV="$FLEET_DIR/scripts/inv.py"
+inv() { python3 "$INV" "$@"; }
+
+nodes_for() { if [[ "${1:-}" == all ]]; then inv nodes; else inv get "nodes.$1.ssh" >/dev/null && echo "$1"; fi; }
+edge_node() {
+  local n
+  for n in $(inv nodes); do
+    if [[ "$(inv get "nodes.$n.edge" 2>/dev/null || true)" == True ]]; then echo "$n"; fi
+  done
+}
+
+sync_node() {
+  local n="$1" ssh dir
+  ssh="$(inv get "nodes.$n.ssh")"; dir="$(inv get "nodes.$n.fleet_dir")"
+  echo "==> sync $n ($ssh:$dir)"
+  ssh "$ssh" "mkdir -p '$dir'"
+  rsync -rlptz \
+    --exclude .git --exclude /build --exclude .DS_Store --exclude __pycache__ \
+    --include .env.example --exclude .env --exclude '.env.*' --exclude '*.env' \
+    --exclude /stacks/cube/model --exclude /stacks/cube/cube.js \
+    --exclude 'data/' --exclude 'config/' --exclude 'library/' \
+    "$FLEET_DIR/" "$ssh:$dir/"
+  ssh "$ssh" "printf '%s\n' '$(git -C "$FLEET_DIR" rev-parse --short HEAD 2>/dev/null || echo uncommitted)$(git -C "$FLEET_DIR" diff --quiet 2>/dev/null || echo '+dirty')' > '$dir/.deployed-revision'"
+}
+
+apply_node() {
+  local n="$1" ssh dir
+  ssh="$(inv get "nodes.$n.ssh")"; dir="$(inv get "nodes.$n.fleet_dir")"
+  sync_node "$n"
+  if [[ "$n" == "$(edge_node)" ]]; then
+    echo "==> [$n] edge role"; ssh "$ssh" "FLEET_NODE=$n '$dir/edge/setup-edge.sh'"
+  fi
+  echo "==> [$n] agent"; ssh "$ssh" "FLEET_NODE=$n '$dir/agent/install-agent.sh'"
+  echo "==> [$n] tailnet exposure"; ssh "$ssh" "FLEET_NODE=$n '$dir/scripts/expose-tailnet.sh'"
+}
+
+status() {
+  local edge ssh
+  edge="$(edge_node)"; ssh="$(inv get "nodes.$edge.ssh")"
+  for n in $(inv nodes); do
+    echo "== $n"
+    ssh "$ssh" "curl -fsS -m 8 http://127.0.0.1/api/nodes/$n/system" 2>/dev/null | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+m, c, k = d["memory"], d["cpu"], d["disk"]
+gb = lambda b: "%.1fG" % (b / 2**30)
+print("  %s  cpu %s%%  load %s  mem %s/%s  disk %s%%  up %dh" % (d["hostname"], c["percent"], " ".join(map(str, c["load"])), gb(m["used"]), gb(m["total"]), k["percent"], (d["uptime_seconds"] or 0) // 3600))
+for x in d["containers"]:
+    print("  [ctr] %-34s %s" % (x["name"], x["status"]))
+for sid, s in d["services"].items():
+    print("  [svc] %-12s %s" % (sid, s["status"]))
+' || echo "  agent unreachable"
+  done
+}
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  sync) for n in $(nodes_for "${1:?node|all}"); do sync_node "$n"; done ;;
+  apply) for n in $(nodes_for "${1:?node|all}"); do apply_node "$n"; done ;;
+  stacks) n="${1:?node}"; shift; ssh "$(inv get "nodes.$n.ssh")" "'$(inv get "nodes.$n.fleet_dir")/stacks/stacks.sh' $*" ;;
+  status) status ;;
+  render) python3 "$FLEET_DIR/edge/render.py" ;;
+  *) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

@@ -1,0 +1,27 @@
+name: 9router
+
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    restart: unless-stopped
+    ports:
+      - "${LAN_IP:-192.168.0.172}:${ROUTER_PORT:-20128}:20128"
+    cpu_shares: 256
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:20128/api/health"]
+      interval: 120s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+    environment:
+      DATA_DIR: /app/data
+      INITIAL_PASSWORD: "${INITIAL_PASSWORD:?set INITIAL_PASSWORD in 9router .env}"
+    volumes:
+      - "${DATA_DIR:-/home/aravind/data/9router}:/app/data"

@@ -1,0 +1,202 @@
+name: aruba-devdeps
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kg_mcp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in devdeps .env}
+      POSTGRES_DB: ${POSTGRES_DB:-kg_mcp_db}
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+      - "-c"
+      - "synchronous_commit=off"
+    ports:
+      - "${LAN_IP:-192.168.0.172}:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    cpu_shares: 256
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kg_mcp} -d ${POSTGRES_DB:-kg_mcp_db}"]
+      interval: 120s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 5s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command:
+      - "redis-server"
+      - "--maxmemory"
+      - "192mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+      # Cache-only: disable RDB snapshots to cut idle CPU/IO on small host.
+      - "--save"
+      - ""
+      - "--appendonly"
+      - "no"
+    ports:
+      - "${LAN_IP:-192.168.0.172}:6380:6379"
+    volumes:
+      - redis_data:/data
+    cpu_shares: 128
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 120s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+      start_interval: 5s
+    restart: unless-stopped
+
+  dgraph:
+    image: dgraph/standalone:latest
+    environment:
+      DGRAPH_ALPHA_CACHE: "size-mb=256; percentage=40,40,20;"
+    ports:
+      - "${LAN_IP:-192.168.0.172}:8080:8080"
+      - "${LAN_IP:-192.168.0.172}:9080:9080"
+    volumes:
+      - dgraph_data:/dgraph
+    cpu_shares: 64
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 120s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    restart: unless-stopped
+
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.30.23
+    profiles: [weaviate]
+    depends_on:
+      - weaviate-transformers
+    environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: text2vec-transformers
+      ENABLE_MODULES: text2vec-transformers
+      TRANSFORMERS_INFERENCE_API: http://weaviate-transformers:8080
+      CLUSTER_HOSTNAME: node1
+    ports:
+      - "${LAN_IP:-192.168.0.172}:8088:8080"
+      - "${LAN_IP:-192.168.0.172}:50051:50051"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/v1/.well-known/ready']
+      interval: 5s
+      timeout: 2s
+      retries: 12
+      start_period: 5s
+    restart: 'no'
+
+  weaviate-transformers:
+    image: cr.weaviate.io/semitechnologies/transformers-inference:sentence-transformers-all-MiniLM-L6-v2
+    profiles: [weaviate]
+    environment:
+      ENABLE_CUDA: '0'
+    restart: 'no'
+
+  langfuse-clickhouse:
+    image: clickhouse/clickhouse-server:25.12
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouse}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set CLICKHOUSE_PASSWORD in devdeps .env}
+    ports:
+      - "${LAN_IP:-192.168.0.172}:8124:8123"
+      - "${LAN_IP:-192.168.0.172}:9002:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./clickhouse-config/tuning.xml:/etc/clickhouse-server/config.d/tuning.xml:ro
+      - ./clickhouse-config/users-tuning.xml:/etc/clickhouse-server/users.d/tuning.xml:ro
+    cpu_shares: 128
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping"]
+      interval: 120s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 5s
+    restart: unless-stopped
+
+  langfuse-minio:
+    image: cgr.dev/chainguard/minio
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in devdeps .env}
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://minio.local}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://minio-console.local}
+    ports:
+      - "${LAN_IP:-192.168.0.172}:9092:9000"
+      - "${LAN_IP:-192.168.0.172}:9094:9001"
+    extra_hosts:
+      - "minio.local:host-gateway"
+      - "minio-console.local:host-gateway"
+    volumes:
+      - minio_data:/data
+    cpu_shares: 128
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 120s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+      start_interval: 5s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  dgraph_data:
+  weaviate_data:
+  clickhouse_data:
+  clickhouse_logs:
+  minio_data:
+
+networks:
+  default:
+    name: ai-infra-local

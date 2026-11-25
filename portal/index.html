@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Home fleet: machines, services and live health.">
+<title>Fleet</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3">
+<link rel="shortcut icon" href="/favicon.ico?v=3">
+<style>
+:root {
+  --bg-app: #0a0d12;
+  --bg-card: #121820;
+  --bg-card-hover: #18202b;
+  --bg-subtle: rgba(255, 255, 255, 0.045);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-hover: rgba(96, 165, 250, 0.45);
+  --text-primary: #f0f4f8;
+  --text-secondary: #a5b4c4;
+  --text-tertiary: #7e8c9e;
+  --accent: #1d4ed8;
+  --accent-ink: #60a5fa;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --muted: #64748b;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent-ink); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { width: 28px; height: 28px; }
+.brand h1 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
+.brand p { color: var(--text-tertiary); font-size: 12.5px; }
+.summary { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 9999px;
+  font-size: 12px; color: var(--text-secondary); background: var(--bg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.up { background: var(--success); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15); }
+.dot.down { background: var(--danger); box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15); }
+.dot.warn { background: var(--warning); }
+.dot.stopped, .dot.unknown { background: var(--muted); }
+
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 600; margin: 28px 0 12px; }
+
+.nodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.node { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; min-width: 0; }
+.node-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.node-title { font-size: 16px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+.node-role { color: var(--text-secondary); font-size: 12.5px; margin-top: 2px; }
+.node-sub { color: var(--text-tertiary); font-size: 12px; font-family: var(--mono); margin-top: 6px; overflow-wrap: anywhere; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; border: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; }
+.badge.offline { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); }
+
+.meter { margin: 10px 0; }
+.meter-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; font-variant-numeric: tabular-nums; }
+.meter-top b { color: var(--text-primary); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent-ink); border-radius: 3px; transition: width 0.6s ease; }
+.bar > i.hot { background: var(--warning); }
+.bar > i.crit { background: var(--danger); }
+.cores { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; height: 22px; align-items: end; margin-top: 6px; }
+.cores > i { display: block; background: rgba(96, 165, 250, 0.55); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.6s ease; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.stat { background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 8px; min-width: 0; }
+.stat span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
+.stat b { display: block; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.control { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+.control .label { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
+button {
+  font: inherit; font-size: 12.5px; padding: 5px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--bg-subtle); color: var(--text-primary); cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--border-hover); }
+button:disabled { opacity: 0.5; cursor: default; }
+
+details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+summary { cursor: pointer; color: var(--text-secondary); font-size: 12.5px; list-style: none; display: flex; justify-content: space-between; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "Show"; color: var(--text-tertiary); }
+details[open] summary::after { content: "Hide"; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
+td { padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: var(--text-secondary); }
+td:first-child { color: var(--text-primary); max-width: 0; width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 8px; }
+td.r { text-align: right; white-space: nowrap; padding-left: 8px; }
+
+.services { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.svc { display: block; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; color: inherit; min-width: 0; transition: border-color 0.15s, background 0.15s; }
+a.svc:hover { border-color: var(--border-hover); background: var(--bg-card-hover); text-decoration: none; }
+.svc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.svc-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.svc-desc { color: var(--text-secondary); font-size: 12.5px; margin-top: 4px; }
+.svc-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 11.5px; color: var(--text-tertiary); font-family: var(--mono); }
+.svc-meta .url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+footer { margin-top: 36px; color: var(--text-tertiary); font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+footer code { font-family: var(--mono); color: var(--text-secondary); }
+@media (max-width: 480px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .nodes { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <img src="/favicon.svg?v=3" alt="">
+      <div>
+        <h1>Fleet</h1>
+        <p id="subtitle">Machines and services at home</p>
+      </div>
+    </div>
+    <div class="summary" id="summary"></div>
+  </header>
+
+  <h2>Machines</h2>
+  <section class="nodes" id="nodes"></section>
+
+  <h2>Services</h2>
+  <section class="services" id="services"></section>
+
+  <footer>
+    <span>Names: <code id="dns-hint"></code></span>
+    <span id="agents"></span>
+  </footer>
+</div>
+
+<script>
+const POLL_MS = 3000;
+const state = { inv: null, nodes: {}, fails: {}, busy: {} };
+const usesLocal = location.hostname.endsWith('.local');
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const bytes = (n) => {
+  if (n == null) return '–';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(n >= 100 || i === 0 ? 0 : 1)} ${u[i]}`;
+};
+const rate = (n) => `${bytes(n)}/s`;
+const uptime = (s) => {
+  if (s == null) return '–';
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+};
+const level = (p) => (p >= 90 ? 'crit' : p >= 75 ? 'hot' : '');
+const serviceHost = (s) => `${s.name_host}.${usesLocal ? 'local' : state.inv.domain}`;
+
+function meter(label, pct, detail) {
+  const p = Math.max(0, Math.min(100, pct || 0));
+  return `<div class="meter"><div class="meter-top"><span>${label}</span><span><b>${p.toFixed(0)}%</b> ${detail || ''}</span></div>
+    <div class="bar"><i class="${level(p)}" style="width:${p}%"></i></div></div>`;
+}
+
+function nodeCard(id) {
+  const meta = state.inv.nodes[id];
+  const d = state.nodes[id];
+  const offline = !d || state.fails[id] >= 2;
+  const sub = d ? `${esc(d.hostname)} · ${d.os === 'macos' ? 'macOS' : 'Linux'} ${esc(d.os_version)} · ${esc(meta.tailscale_ip)}` : esc(meta.tailscale_ip);
+  let body = '';
+  if (d) {
+    const c = d.cpu, m = d.memory, k = d.disk;
+    const cores = (c.per_cpu || []).map((v) => `<i style="height:${Math.max(2, v)}%" title="${v}%"></i>`).join('');
+    body += meter(`CPU · ${c.physical_cores}c/${c.threads}t`, c.percent, '') + `<div class="cores">${cores}</div>`;
+    body += meter('Memory', m.percent, `${bytes(m.used)} / ${bytes(m.total)}`);
+    if (m.swap_total) body += meter('Swap', m.swap_percent, `${bytes(m.swap_used)} / ${bytes(m.swap_total)}`);
+    body += meter('Disk', k.percent, `${bytes(k.used)} / ${bytes(k.total)}`);
+    body += `<div class="stats">
+      <div class="stat"><span>Load</span><b>${(c.load || []).map((x) => x.toFixed(2)).join(' ')}</b></div>
+      <div class="stat"><span>${c.temp != null ? 'Temp' : 'Uptime'}</span><b>${c.temp != null ? c.temp.toFixed(0) + '°C' : uptime(d.uptime_seconds)}</b></div>
+      <div class="stat"><span>Net ↓</span><b>${rate(d.network.rx_rate)}</b></div>
+      <div class="stat"><span>Net ↑</span><b>${rate(d.network.tx_rate)}</b></div>
+    </div>`;
+    for (const stack of meta.controls || []) {
+      const st = (d.stacks || {})[stack] || 'unknown';
+      const running = st === 'running' || st === 'partial';
+      const busy = state.busy[`${id}/${stack}`] || st === 'starting' || st === 'stopping';
+      const dot = st === 'running' ? 'up' : st === 'partial' ? 'warn' : 'stopped';
+      body += `<div class="control"><span class="label"><span class="dot ${dot}"></span>${esc(stack)} · ${esc(st)}</span>
+        <button ${busy ? 'disabled' : ''} onclick="stackAction('${id}','${stack}','${running ? 'stop' : 'start'}')">${busy ? 'Working…' : running ? 'Stop' : 'Start'}</button></div>`;
+    }
+    const running = (d.containers || []).filter((x) => x.state === 'running');
+    if (d.docker) {
+      body += `<details><summary>Containers · ${running.length} running${d.containers.length > running.length ? `, ${d.containers.length - running.length} stopped` : ''}</summary><table>${
+        d.containers.map((x) => `<tr><td title="${esc(x.image)}">${esc(x.name)}</td><td class="r">${x.resources ? esc(x.resources.cpu) + ' · ' + esc(x.resources.mem) : ''}</td><td class="r">${esc(x.state)}</td></tr>`).join('')
+      }</table></details>`;
+    }
+    body += `<details><summary>Top processes</summary><table>${
+      (d.top_processes || []).map((p) => `<tr><td>${esc(p.name)}</td><td class="r">${p.cpu.toFixed(1)}%</td><td class="r">${bytes(p.mem)}</td></tr>`).join('')
+    }</table></details>`;
+  } else {
+    body = `<div class="node-sub">Waiting for the agent…</div>`;
+  }
+  return `<article class="node">
+    <div class="node-head"><div>
+      <div class="node-title"><span class="dot ${offline ? 'down' : 'up'}"></span>${esc(meta.title)}</div>
+      <div class="node-role">${esc(meta.role)}</div>
+      <div class="node-sub">${sub}</div>
+    </div><span class="badge ${offline ? 'offline' : ''}">${offline ? 'offline' : 'up ' + uptime(d && d.uptime_seconds)}</span></div>
+    ${body}</article>`;
+}
+
+function serviceCard(s) {
+  const node = state.nodes[s.node];
+  const nodeDown = !node || state.fails[s.node] >= 2;
+  const h = node && node.services ? node.services[s.id] : null;
+  let status = nodeDown ? 'unknown' : h ? h.status : 'unknown';
+  if (status === 'down' && s.optional) status = 'stopped';
+  const label = { up: h && h.ms != null ? `${h.ms} ms` : 'up', down: 'down', stopped: 'stopped', unknown: nodeDown ? 'node offline' : 'checking' }[status];
+  const host = serviceHost(s);
+  const res = h && h.resources ? ` · ${esc(h.resources.cpu)} · ${esc(h.resources.mem)}` : '';
+  return `<a class="svc" href="http://${host}" target="_blank" rel="noopener">
+    <div class="svc-top"><span class="svc-name"><span class="dot ${status}"></span>${esc(s.name)}</span><span class="badge">${esc(state.inv.nodes[s.node].title)}</span></div>
+    <div class="svc-desc">${esc(s.desc)}</div>
+    <div class="svc-meta"><span class="url">${esc(host)}</span><span>${esc(label)}${res}</span></div></a>`;
+}
+
+function render() {
+  const inv = state.inv;
+  const ids = Object.keys(inv.nodes);
+  document.getElementById('nodes').innerHTML = ids.map(nodeCard).join('');
+  document.getElementById('services').innerHTML = inv.services.map(serviceCard).join('');
+  const online = ids.filter((id) => state.nodes[id] && !(state.fails[id] >= 2)).length;
+  let up = 0, down = 0;
+  for (const s of inv.services) {
+    const h = state.nodes[s.node] && state.nodes[s.node].services ? state.nodes[s.node].services[s.id] : null;
+    if (h && h.status === 'up') up++;
+    else if (h && h.status === 'down' && !s.optional) down++;
+  }
+  document.getElementById('summary').innerHTML =
+    `<span class="pill"><span class="dot ${online === ids.length ? 'up' : 'down'}"></span>${online}/${ids.length} machines</span>` +
+    `<span class="pill"><span class="dot ${down ? 'down' : 'up'}"></span>${up}/${inv.services.length} services up</span>` +
+    `<span class="pill">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>`;
+}
+
+async function poll(id) {
+  try {
+    const r = await fetch(`/api/nodes/${id}/system`, { cache: 'no-store', signal: AbortSignal.timeout(6000) });
+    if (!r.ok) throw new Error(r.status);
+    state.nodes[id] = await r.json();
+    state.fails[id] = 0;
+  } catch (e) {
+    state.fails[id] = (state.fails[id] || 0) + 1;
+  }
+  render();
+}
+
+async function stackAction(node, stack, action) {
+  const key = `${node}/${stack}`;
+  if (action === 'stop' && !confirm(`Stop ${stack} on ${state.inv.nodes[node].title}?`)) return;
+  state.busy[key] = true; render();
+  try {
+    await fetch(`/api/nodes/${node}/stacks/${stack}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+  } finally {
+    setTimeout(() => { delete state.busy[key]; poll(node); }, 4000);
+  }
+}
+
+async function main() {
+  state.inv = await (await fetch('/inventory.json', { cache: 'no-store' })).json();
+  document.getElementById('dns-hint').textContent = usesLocal
+    ? '*.local (LAN mDNS) · *.' + state.inv.domain + ' on the tailnet'
+    : '*.' + state.inv.domain + ' (tailnet DNS on devbox) · *.local on the LAN';
+  document.getElementById('agents').innerHTML = 'Agent JSON: ' + Object.keys(state.inv.nodes)
+    .map((id) => `<a href="/api/nodes/${id}/system" target="_blank" rel="noopener">${esc(id)}</a>`).join(' · ');
+  render();
+  for (const id of Object.keys(state.inv.nodes)) {
+    poll(id);
+    setInterval(() => poll(id), POLL_MS);
+  }
+}
+main();
+</script>
+</body>
+</html>

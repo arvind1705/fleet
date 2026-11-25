@@ -1,0 +1,15 @@
+[Unit]
+Description=Fleet DNS (*.home.arpa for the tailnet)
+Documentation=https://github.com/arvind1705/fleet
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+ExecStartPre=/usr/sbin/dnsmasq --test --conf-file=/etc/fleet/dnsmasq.conf
+ExecStart=/usr/sbin/dnsmasq --keep-in-foreground --conf-file=/etc/fleet/dnsmasq.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

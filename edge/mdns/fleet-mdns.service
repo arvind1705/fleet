@@ -1,0 +1,14 @@
+[Unit]
+Description=Fleet mDNS names (*.local) on the LAN
+Documentation=https://github.com/arvind1705/fleet
+After=network-online.target avahi-daemon.service
+Requires=avahi-daemon.service
+
+[Service]
+Type=simple
+ExecStart=/home/aravind/dev/fleet/edge/mdns/fleet-mdns.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

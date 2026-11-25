@@ -1,0 +1,126 @@
+{
+  "domain": "home.arpa",
+  "tailnet": "tail6f092f.ts.net",
+  "portal": {
+    "names": [
+      "fleet",
+      "devbox"
+    ],
+    "local_names": [
+      "fleet",
+      "devbox"
+    ]
+  },
+  "nodes": {
+    "devbox": {
+      "title": "devbox",
+      "role": "Edge, storage, media",
+      "os": "linux",
+      "edge": true,
+      "lan_ip": "192.168.0.172",
+      "tailscale_ip": "100.109.219.37",
+      "tailscale_name": "devbox",
+      "ssh": "devbox",
+      "fleet_dir": "/home/aravind/dev/fleet",
+      "agent_port": 9108,
+      "stacks": [
+        "media-server"
+      ],
+      "controls": [
+        "media-server"
+      ]
+    },
+    "mini": {
+      "title": "Mac mini",
+      "role": "Compute, dev stacks, agents",
+      "os": "macos",
+      "lan_ip": "192.168.0.146",
+      "tailscale_ip": "100.85.3.99",
+      "tailscale_name": "aravinds-mini",
+      "ssh": "macmini",
+      "fleet_dir": "/Users/aravind-mac-mini/dev/fleet",
+      "agent_port": 9108,
+      "stacks": [
+        "9router"
+      ],
+      "controls": []
+    }
+  },
+  "services": [
+    {
+      "id": "jellyfin",
+      "name": "Jellyfin",
+      "desc": "Media streaming",
+      "node": "devbox",
+      "name_host": "jellyfin",
+      "upstream": "192.168.0.172:8096",
+      "health": "/health",
+      "containers": [
+        "jellyfin"
+      ],
+      "stack": "media-server"
+    },
+    {
+      "id": "qbittorrent",
+      "name": "qBittorrent",
+      "desc": "Torrent downloads into the media library",
+      "node": "devbox",
+      "name_host": "qbittorrent",
+      "upstream": "192.168.0.172:8081",
+      "health": "/",
+      "containers": [
+        "qbittorrent"
+      ],
+      "stack": "media-server"
+    },
+    {
+      "id": "9router",
+      "name": "9router",
+      "desc": "LLM gateway",
+      "node": "mini",
+      "name_host": "9router",
+      "upstream": "127.0.0.1:20128",
+      "health": "/api/health",
+      "containers": [
+        "9router"
+      ],
+      "stack": "9router"
+    },
+    {
+      "id": "langfuse",
+      "name": "Langfuse",
+      "desc": "LLM tracing (ai-infra stack)",
+      "node": "mini",
+      "name_host": "langfuse",
+      "upstream": "127.0.0.1:3005",
+      "health": "/api/public/health",
+      "containers": [
+        "ai-infra-langfuse-web-1"
+      ],
+      "optional": true
+    },
+    {
+      "id": "cube",
+      "name": "Cube",
+      "desc": "Semantic layer API (ai-infra stack)",
+      "node": "mini",
+      "name_host": "cube",
+      "upstream": "127.0.0.1:4000",
+      "health": "/readyz",
+      "containers": [
+        "ai-infra-cube-1"
+      ],
+      "optional": true
+    },
+    {
+      "id": "t3",
+      "name": "T3 Code",
+      "desc": "Coding agent server",
+      "node": "mini",
+      "name_host": "t3",
+      "upstream": "127.0.0.1:3773",
+      "health": "/",
+      "tailnet_port_open": true
+    }
+  ]
+}

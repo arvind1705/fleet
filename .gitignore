@@ -1,0 +1,25 @@
+# Secrets and private runtime files stay on each host
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+**/*.pem
+**/*.key
+
+# Persistent state and private Cube model files
+stacks/**/data/
+stacks/**/backup/
+stacks/**/config/
+stacks/**/library/
+/stacks/cube/*
+!/stacks/cube/compose.yaml
+!/stacks/cube/README.md
+
+# Generated edge config
+/build/
+
+__pycache__/
+*.py[codz]
+.DS_Store
+*.log
