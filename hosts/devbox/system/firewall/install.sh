@@ -23,4 +23,10 @@ if sudo iptables -S ARUBA-DEVDEPS-LAN >/dev/null 2>&1; then
   sudo iptables -F ARUBA-DEVDEPS-LAN
   sudo iptables -X ARUBA-DEVDEPS-LAN
 fi
+# media-lan-filter owns firewall persistence. A saved iptables-persistent snapshot would
+# restore stale Docker rules (old container IPs) and retired chains at every boot.
+if systemctl is-enabled --quiet netfilter-persistent.service 2>/dev/null; then
+  sudo systemctl disable --quiet netfilter-persistent.service
+fi
+sudo rm -f /etc/iptables/rules.v4 /etc/iptables/rules.v6
 echo "    ✓ media-lan-filter active (chain MEDIA-LAN)"

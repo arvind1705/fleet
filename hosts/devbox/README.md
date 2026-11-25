@@ -8,9 +8,9 @@ Headless Ubuntu box (2 cores / 4 threads, 8 GB, 1 TB HDD) on Wi-Fi (`wlp3s0`) at
 |---|---|
 | Fleet edge | `caddy` (proxy and portal at `/srv/fleet-portal`), `fleet-dns` (dnsmasq for `*.home.arpa` on the tailnet IP), `fleet-mdns` (`*.local` via Avahi), `fleet-agent` |
 | Media | `stack@media-server` (Jellyfin, qBittorrent; containers `unless-stopped`) |
-| Network and security | `tailscaled`, `ssh` (key-only), `media-lan-filter` (iptables `MEDIA-LAN` in `DOCKER-USER`), `avahi-daemon`, `wifi-powersave-off` |
+| Network and security | `tailscaled`, `ssh` (key-only), `media-lan-filter` (iptables `MEDIA-LAN` in `DOCKER-USER`; `netfilter-persistent` is disabled so no stale snapshot is restored), `avahi-daemon`, `wifi-powersave-off` |
 | System | `docker`, `zswap-enable`, `unattended-upgrades`, plus Ubuntu defaults |
-| Rex | Personal server for `aravind`: `systemctl --user` `rex.socket` (socket-activated, lingering on), started with `--tailscale` via the drop-in `rex/tailscale.conf`, so it is on the tailnet as `rex.tail6f092f.ts.net` (owner-only access). The packaged system `rex.service` and `rex-login-server.service` (account `rex`) are disabled; nothing used them. |
+| Rex | Personal server for `aravind`: `systemctl --user` `rex.socket` (socket-activated, lingering on), enabled at boot (`systemctl --user enable rex.service`) and started with `--tailscale` via the drop-in `rex/tailscale.conf`, so it is on the tailnet as `rex.tail6f092f.ts.net` (owner-only access). The packaged system `rex.service` and `rex-login-server.service` (account `rex`) are disabled; nothing used them. |
 
 ## Layout on the host
 
