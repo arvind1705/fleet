@@ -34,14 +34,12 @@ python3 edge/render.py "$out/edge" >/dev/null
 if command -v caddy >/dev/null 2>&1; then caddy validate --adapter caddyfile --config "$out/edge/Caddyfile" >/dev/null; echo "Caddyfile ok"; fi
 
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-  unset POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB CLICKHOUSE_USER CLICKHOUSE_PASSWORD \
-    MINIO_ROOT_USER MINIO_ROOT_PASSWORD INITIAL_PASSWORD COMPOSE_ENV_FILES COMPOSE_FILE COMPOSE_PROFILES
+  unset INITIAL_PASSWORD COMPOSE_ENV_FILES COMPOSE_FILE COMPOSE_PROFILES
   for stack in stacks/*/compose.yaml; do
     src="${stack%/*}"; dst="$out/stacks/${src##*/}"
     mkdir -p "$dst"; cp "$stack" "$dst/compose.yaml"
-    for f in .env.example langfuse.env.example; do [[ -f "$src/$f" ]] && cp "$src/$f" "$dst/$f"; done
+    [[ -f "$src/.env.example" ]] && cp "$src/.env.example" "$dst/.env.example"
   done
-  cp stacks/cube.env.example "$out/stacks/cube.env.example"
   cp "$out/stacks/media-server/.env.example" "$out/stacks/media-server/.env"
   python3 stacks/provision-env.py "$out/stacks" 127.0.0.1 >/dev/null
   for stack in stacks/*/compose.yaml; do

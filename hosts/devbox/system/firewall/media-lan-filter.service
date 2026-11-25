@@ -1,0 +1,13 @@
+[Unit]
+Description=Restrict media-server ports (Jellyfin, qBittorrent) to the LAN
+Documentation=https://github.com/arvind1705/fleet
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/media-lan-filter
+
+[Install]
+WantedBy=multi-user.target

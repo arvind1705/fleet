@@ -1,9 +1,11 @@
 #!/bin/sh
+# Allow the media-server ports (Jellyfin, qBittorrent WebUI, torrent, Jellyfin discovery)
+# only from the LAN subnet. Docker-published ports bypass INPUT, so this hooks DOCKER-USER.
 set -eu
 SUBNET="${SUBNET:-192.168.0.0/24}"
 DEVBOX_IP="${DEVBOX_IP:-192.168.0.172}"
 LAN_IFACE="${LAN_IFACE:-wlp3s0}"
-CHAIN=ARUBA-DEVDEPS-LAN
+CHAIN=MEDIA-LAN
 TCP_PORTS="8096 8081 6881"
 UDP_PORTS="6881 7359"
 iptables -N "$CHAIN" 2>/dev/null || true

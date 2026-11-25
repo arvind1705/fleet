@@ -54,7 +54,6 @@ copy_node() {
   rsync -rlptz \
     --exclude .git --exclude /build --exclude .DS_Store --exclude __pycache__ \
     --include .env.example --exclude .env --exclude '.env.*' --exclude '*.env' \
-    --exclude /stacks/cube/model --exclude /stacks/cube/cube.js \
     --exclude 'data/' --exclude 'config/' --exclude 'library/' \
     "$FLEET_DIR/" "$ssh:$dir/"
   ssh "$ssh" "printf '%s\n' '$(git -C "$FLEET_DIR" rev-parse --short HEAD 2>/dev/null || echo uncommitted)$(git -C "$FLEET_DIR" diff --quiet 2>/dev/null || echo '+dirty')' > '$dir/.deployed-revision'"

@@ -24,9 +24,10 @@ they finish. No hardlinks, no helper scripts.
 > port (`Invalid Host header, port mismatch`). If you change `QBT_WEBUI_PORT`
 > in `.env`, both sides change together, so it stays consistent.
 >
-> The existing Langfuse/dev stack binds to the LAN IP too, so this stack does
-> the same: nothing is published on `0.0.0.0`. There is **no UFW** on this box,
-> so port binding + no router port-forwarding is the whole security model.
+> Every port is published on the LAN IP only, never on `0.0.0.0`. There is
+> **no UFW** on this box; `media-lan-filter.service` (iptables, in
+> `hosts/devbox/system/firewall/`) drops connections to these ports from
+> outside the LAN subnet, and the router forwards none of them.
 > Don't port-forward 8096 / 8081 on your router. (`6881` is the exception —
 > that one is torrent traffic, see the checklist.)
 
@@ -328,6 +329,6 @@ match host paths exactly, which keeps paths predictable.
   torrenting (Real-Debrid needs no VPN and no seeding).
 - **Backups:** only `/home/aravind/entertainment/config` really matters. Media is replaceable.
   `tar czf media-config.tgz -C /home/aravind/entertainment config`.
-- **Other services on this box:** there's a Langfuse/dev stack with 7
-  containers. Don't reuse its ports (3005, 5432, 6380, 8080, 8124, 9002,
-  9080, 9092, 9094). RAM is ~7 GB total, so avoid adding heavy services.
+- **Other services on this box:** devbox is the fleet edge (Caddy on :80,
+  tailnet DNS, mDNS, the portal agent on 127.0.0.1:9108). RAM is ~7 GB total,
+  so put heavy services on the Mac mini instead.

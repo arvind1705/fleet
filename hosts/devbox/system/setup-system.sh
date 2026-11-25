@@ -45,14 +45,9 @@ if [[ -d /etc/apt/apt.conf.d ]]; then
   echo "    ✓ unattended upgrades config applied"
 fi
 
-# 5. LAN filter firewall service
+# 5. Media LAN filter (iptables DOCKER-USER chain for the media-server ports)
 if command -v iptables >/dev/null 2>&1; then
-  sudo cp "$DIR/firewall/aruba-devdeps-lan-filter.sh" /usr/local/sbin/aruba-devdeps-lan-filter
-  sudo chmod +x /usr/local/sbin/aruba-devdeps-lan-filter
-  sudo cp "$DIR/firewall/aruba-devdeps-lan-filter.service" /etc/systemd/system/
-  sudo systemctl daemon-reload
-  sudo systemctl enable --now aruba-devdeps-lan-filter.service || true
-  echo "    ✓ aruba-devdeps LAN firewall filter enabled"
+  "$DIR/firewall/install.sh"
 fi
 
 # 6. Sysctl performance tuning (swappiness & cache pressure for low-power host)

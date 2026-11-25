@@ -32,7 +32,7 @@
     },
     "mini": {
       "title": "Mac mini",
-      "role": "Compute, dev stacks, agents",
+      "role": "Compute, 9router, agents",
       "os": "macos",
       "lan_ip": "192.168.0.146",
       "tailscale_ip": "100.85.3.99",
@@ -85,32 +85,6 @@
         "9router"
       ],
       "stack": "9router"
-    },
-    {
-      "id": "langfuse",
-      "name": "Langfuse",
-      "desc": "LLM tracing (ai-infra stack)",
-      "node": "mini",
-      "name_host": "langfuse",
-      "upstream": "127.0.0.1:3005",
-      "health": "/api/public/health",
-      "containers": [
-        "ai-infra-langfuse-web-1"
-      ],
-      "optional": true
-    },
-    {
-      "id": "cube",
-      "name": "Cube",
-      "desc": "Semantic layer API (ai-infra stack)",
-      "node": "mini",
-      "name_host": "cube",
-      "upstream": "127.0.0.1:4000",
-      "health": "/readyz",
-      "containers": [
-        "ai-infra-cube-1"
-      ],
-      "optional": true
     },
     {
       "id": "t3",

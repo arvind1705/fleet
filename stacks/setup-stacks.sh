@@ -49,12 +49,6 @@ mkdir -p \
 echo "==> Provisioning missing stack environment files..."
 python3 "$STACKS_DIR/provision-env.py" "$STACKS_DIR" "$LAN_IP"
 
-# 6. Ensure the shared network exists before stacks with external network references start.
-if ! docker network inspect ai-infra-local >/dev/null 2>&1; then
-  echo "==> Creating shared Docker network ai-infra-local..."
-  docker network create ai-infra-local >/dev/null
-fi
-
 # 7. Initialize media-server .env
 if [[ ! -e "$STACKS_DIR/media-server/.env" && ! -L "$STACKS_DIR/media-server/.env" ]]; then
   echo "==> Creating stacks/media-server/.env with detected machine values..."
@@ -89,12 +83,6 @@ if [[ -d /etc/systemd/system ]]; then
     sudo rm -f /etc/systemd/system/stack@analytics.service
   fi
 
-  for override_dir in langfuse cube; do
-    if [[ -d "$STACKS_DIR/systemd/stack@$override_dir.service.d" ]]; then
-      sudo mkdir -p "/etc/systemd/system/stack@$override_dir.service.d"
-      sudo cp "$STACKS_DIR/systemd/stack@$override_dir.service.d/override.conf" "/etc/systemd/system/stack@$override_dir.service.d/"
-    fi
-  done
   sudo systemctl daemon-reload
 
   # Start on boot exactly the stacks inventory.json assigns to this node.
