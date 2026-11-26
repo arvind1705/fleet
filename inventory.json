@@ -87,6 +87,14 @@
       "stack": "9router"
     },
     {
+      "id": "easycliproxy",
+      "name": "EasyCLIProxyAPI",
+      "desc": "Local CLI proxy",
+      "node": "mini",
+      "upstream": "127.0.0.1:8317",
+      "health": "/"
+    },
+    {
       "id": "t3",
       "name": "T3 Code",
       "desc": "Coding agent server",

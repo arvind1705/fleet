@@ -233,12 +233,15 @@ function serviceCard(s) {
   let status = nodeDown ? 'unknown' : h ? h.status : 'unknown';
   if (status === 'down' && s.optional) status = 'stopped';
   const label = { up: h && h.ms != null ? `${h.ms} ms` : 'up', down: 'down', stopped: 'stopped', unknown: nodeDown ? 'node offline' : 'checking' }[status];
-  const host = serviceHost(s);
+  const host = s.name_host ? serviceHost(s) : '';
   const res = h && h.resources ? ` · ${esc(h.resources.cpu)} · ${esc(h.resources.mem)}` : '';
-  return `<a class="svc" href="http://${host}" target="_blank" rel="noopener">
+  const content = `
     <div class="svc-top"><span class="svc-name"><span class="dot ${status}"></span>${esc(s.name)}</span><span class="badge">${esc(state.inv.nodes[s.node].title)}</span></div>
     <div class="svc-desc">${esc(s.desc)}</div>
-    <div class="svc-meta"><span class="url">${esc(host)}</span><span>${esc(label)}${res}</span></div></a>`;
+    <div class="svc-meta">${host ? `<span class="url">${esc(host)}</span>` : ''}<span>${esc(label)}${res}</span></div>`;
+  return host
+    ? `<a class="svc" href="http://${esc(host)}" target="_blank" rel="noopener">${content}</a>`
+    : `<article class="svc">${content}</article>`;
 }
 
 function render() {

@@ -57,6 +57,8 @@ def caddyfile(inv):
     out.append("\t}")
     out.append("}")
     for s in inv["services"]:
+        if not s.get("name_host"):
+            continue
         hosts = ["http://%s.%s" % (s["name_host"], dom), "http://%s.local" % s["name_host"]]
         out.append("")
         out.append(", ".join(hosts) + " {")
@@ -99,7 +101,8 @@ def dnsmasq(inv):
     for n in inv["portal"]["names"]:
         records["%s.%s" % (n, dom)] = e["tailscale_ip"]
     for svc in inv["services"]:
-        records["%s.%s" % (svc["name_host"], dom)] = e["tailscale_ip"]
+        if svc.get("name_host"):
+            records["%s.%s" % (svc["name_host"], dom)] = e["tailscale_ip"]
     for name, node in inv["nodes"].items():
         records["%s.%s" % (name, dom)] = node["tailscale_ip"]
     for name in sorted(records):
@@ -109,7 +112,7 @@ def dnsmasq(inv):
 
 def mdns_hosts(inv):
     names = ["%s.local" % n for n in inv["portal"]["local_names"]]
-    names += ["%s.local" % s["name_host"] for s in inv["services"]]
+    names += ["%s.local" % s["name_host"] for s in inv["services"] if s.get("name_host")]
     seen = []
     for n in names:
         if n not in seen:

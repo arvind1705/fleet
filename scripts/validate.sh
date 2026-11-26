@@ -19,8 +19,10 @@ assert sum(1 for n in nodes.values() if n.get("edge")) == 1, "exactly one edge n
 seen = set()
 for s in inv["services"]:
     assert s["node"] in nodes, "%s: unknown node %s" % (s["id"], s["node"])
-    assert s["name_host"] not in seen, "duplicate name %s" % s["name_host"]
-    seen.add(s["name_host"])
+    name_host = s.get("name_host")
+    if name_host:
+        assert name_host not in seen, "duplicate name %s" % name_host
+        seen.add(name_host)
     assert ":" in s["upstream"], "%s: upstream needs host:port" % s["id"]
 for n, v in nodes.items():
     for st in v.get("stacks", []) + v.get("controls", []):

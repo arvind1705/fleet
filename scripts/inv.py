@@ -53,6 +53,8 @@ elif cmd == "serve-ports":
     n = node or this_node()
     ports = [inv["nodes"][n]["agent_port"]]
     for s in inv["services"]:
+        if not s.get("name_host"):
+            continue
         host, port = s["upstream"].rsplit(":", 1)
         if s["node"] == n and host in ("127.0.0.1", "localhost") and not s.get("tailnet_port_open"):
             ports.append(int(port))
