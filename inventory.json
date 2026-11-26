@@ -93,7 +93,7 @@
       "node": "mini",
       "name_host": "t3",
       "upstream": "127.0.0.1:3773",
-      "health": "/"
+      "monitor": false
     }
   ]
 }

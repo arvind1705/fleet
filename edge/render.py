@@ -124,7 +124,8 @@ def portal_inventory(inv):
         nodes[name] = {k: n[k] for k in ("title", "role", "os", "lan_ip", "tailscale_ip", "controls") if k in n}
     services = []
     for s in inv["services"]:
-        services.append({k: s[k] for k in ("id", "name", "desc", "node", "name_host", "optional", "stack") if k in s})
+        if s.get("monitor", True):
+            services.append({k: s[k] for k in ("id", "name", "desc", "node", "name_host", "optional", "stack") if k in s})
     return json.dumps({"domain": inv["domain"], "nodes": nodes, "services": services}, indent=2) + "\n"
 
 

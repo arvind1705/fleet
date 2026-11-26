@@ -114,6 +114,7 @@ class Collector:
         self.node = node
         self.cfg = inv["nodes"][node]
         self.services = [s for s in inv["services"] if s["node"] == node]
+        self.monitored_services = [s for s in self.services if s.get("monitor", True)]
         self.lock = threading.Lock()
         self.mac_cpu = _MacCpu() if IS_MAC else None
         self.prev_ticks = self._ticks()
@@ -376,7 +377,7 @@ class Collector:
         tick = 0
         while True:
             try:
-                services = dict(pool.map(self._probe, self.services))
+                services = dict(pool.map(self._probe, self.monitored_services))
                 containers = self._containers()
                 update = {"services": services, "containers": containers}
                 if tick % 3 == 0:
@@ -438,7 +439,7 @@ class Collector:
         stats = slow.get("stats") or {}
         by_name = {c["name"]: c for c in (containers or [])}
         services = {}
-        for s in self.services:
+        for s in self.monitored_services:
             probe = slow["services"].get(s["id"])
             names = s.get("containers", [])
             running = [n for n in names if by_name.get(n, {}).get("state") == "running"]

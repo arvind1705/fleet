@@ -78,6 +78,6 @@ First-time host setup: `hosts/devbox/system/setup-system.sh` (devbox OS) and `st
 
 ## Adding a service
 
-1. Add it to `services` in `inventory.json` (node, `name_host`, `upstream` as seen from its node, `health` path, containers).
+1. Add it to `services` in `inventory.json` (node, `name_host`, `upstream` as seen from its node, `health` path, containers). Set `"monitor": false` to omit it from the portal and skip its health probe while keeping its route.
 2. If it runs on a non-edge node bound to loopback, `bin/fleet apply <node>` exposes its port on the tailnet.
 3. `bin/fleet apply devbox` regenerates Caddy, DNS, mDNS names and the portal.
