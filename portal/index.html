@@ -235,9 +235,12 @@ function serviceCard(s) {
   const label = { up: h && h.ms != null ? `${h.ms} ms` : 'up', down: 'down', stopped: 'stopped', unknown: nodeDown ? 'node offline' : 'checking' }[status];
   const host = s.name_host ? serviceHost(s) : '';
   const res = h && h.resources ? ` · ${esc(h.resources.cpu)} · ${esc(h.resources.mem)}` : '';
+  const usage = !nodeDown && status === 'up' ? h.usage : null;
+  const usageLine = usage ? `<div class="svc-desc">Upstream attempts · ${usage.success.toLocaleString()} successful · ${usage.failed.toLocaleString()} failed</div>` : '';
   const content = `
     <div class="svc-top"><span class="svc-name"><span class="dot ${status}"></span>${esc(s.name)}</span><span class="badge">${esc(state.inv.nodes[s.node].title)}</span></div>
     <div class="svc-desc">${esc(s.desc)}</div>
+    ${usageLine}
     <div class="svc-meta">${host ? `<span class="url">${esc(host)}</span>` : ''}<span>${esc(label)}${res}</span></div>`;
   return host
     ? `<a class="svc" href="http://${esc(host)}" target="_blank" rel="noopener">${content}</a>`

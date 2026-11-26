@@ -17,6 +17,11 @@ Runs: 9router (`stacks/9router`), T3 Code, Rex, coding agents, and the pl-ai-inf
 
 The pl-ai-infra agent and MCP host processes do not restart on their own: rerun `make up` after a reboot.
 
+For EasyCLIProxyAPI usage on the Fleet portal, store the management key on the mini in
+`~/.config/fleet/easycliproxy-management-key` with permissions `0600`. The agent reads
+the local management API about once a minute and reports only total successful and failed
+upstream attempts across listed credentials. These are runtime counters and can reset.
+
 ## Setting up a Mac like this one
 
 1. **macOS:** create the user, turn FileVault **off**, set **Users & Groups → Automatically log in as** this user (needs the password, so it stays manual), and leave automatic macOS updates on.

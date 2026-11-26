@@ -12,6 +12,7 @@ The edge proxies it as /api/nodes/<node>/... Runs on Python 3.9+.
 """
 
 import ctypes
+import http.client
 import json
 import os
 import platform
@@ -32,6 +33,7 @@ FLEET_DIR = os.path.dirname(HERE)
 IS_MAC = platform.system() == "Darwin"
 ENV_PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 TAILSCALE = "/Applications/Tailscale.app/Contents/MacOS/Tailscale" if IS_MAC else "tailscale"
+EASYCLIPROXY_KEY = os.path.expanduser("~/.config/fleet/easycliproxy-management-key")
 
 
 def run(args, timeout=5):
@@ -316,6 +318,31 @@ class Collector:
         return rows
 
     # --- slow samples (background)
+    def _easycliproxy_usage(self, svc):
+        host, port = svc["upstream"].rsplit(":", 1)
+        if host != "127.0.0.1":
+            return None
+        try:
+            with open(EASYCLIPROXY_KEY, encoding="utf-8") as key_file:
+                key = key_file.read().strip()
+            if not key:
+                return None
+            connection = http.client.HTTPConnection(host, int(port), timeout=4)
+            try:
+                connection.request("GET", "/v8/management/credentials",
+                                   headers={"Authorization": "Bearer " + key})
+                with connection.getresponse() as response:
+                    if response.status != 200:
+                        return None
+                    files = json.loads(response.read(4 * 1024 * 1024))["files"]
+            finally:
+                connection.close()
+            # Publish counts only. Credential identities and individual events stay local.
+            return {field: sum(entry[field] for entry in files)
+                    for field in ("success", "failed")}
+        except (OSError, http.client.HTTPException, ValueError, TypeError, KeyError):
+            return None
+
     def _probe(self, svc):
         url = "http://%s%s" % (svc["upstream"], svc.get("health", "/"))
         start = time.time()
@@ -375,9 +402,15 @@ class Collector:
     def _slow_loop(self):
         pool = ThreadPoolExecutor(max_workers=6)
         tick = 0
+        proxy = next((svc for svc in self.monitored_services if svc["id"] == "easycliproxy"), None)
+        usage = None
         while True:
             try:
                 services = dict(pool.map(self._probe, self.monitored_services))
+                if proxy:
+                    if tick % 6 == 0:
+                        usage = self._easycliproxy_usage(proxy)
+                    services[proxy["id"]]["usage"] = usage
                 containers = self._containers()
                 update = {"services": services, "containers": containers}
                 if tick % 3 == 0:
